@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
-const API_KEY = 'RGAPI-0ecc944e-362b-4488-aa40-c6a048b4d47b';
+const API_KEY = process.env.RIOT_API_KEY;
 
 app.get('/account/:name/:tag', async (req, res) => {
   try {
