@@ -20,10 +20,11 @@ app.get('/account/:name/:tag', async (req, res) => {
 app.get('/matches/:puuid', async (req, res) => {
   try {
     const { puuid } = req.params;
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const startTs = Math.floor(startOfDay.getTime() / 1000);
-    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=20&startTime=${startTs}&api_key=${API_KEY}`;
+    const startTime = req.query.startTime || (() => {
+      const d = new Date(); d.setHours(0,0,0,0);
+      return Math.floor(d.getTime() / 1000);
+    })();
+    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=100&startTime=${startTime}&api_key=${API_KEY}`;
     const r = await fetch(url);
     const data = await r.json();
     res.json(data);
@@ -52,4 +53,3 @@ app.get('/summoner/:puuid', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Running on port ${PORT}`));
-
