@@ -73,9 +73,13 @@ async function getSummonerIcon(puuid) {
 async function fetchPlayerForTab(player, tab, delay) {
   await sleep(delay);
   try {
+    console.log(`Fetching ${player.name} for tab ${tab}...`);
     const puuid = await getPUUID(player.name, player.tag);
+    console.log(`Got PUUID for ${player.name}`);
     await sleep(200);
     const matchIds = await getMatchIds(puuid, tab);
+    console.log(`Got ${Array.isArray(matchIds) ? matchIds.length : 'ERROR'} matches for ${player.name} (${tab}):`, Array.isArray(matchIds) ? '' : JSON.stringify(matchIds));
+    if (!Array.isArray(matchIds)) return { ok: false, player, error: `Bad matchIds: ${JSON.stringify(matchIds)}` };
     const matches = [];
     const countOnly = [];
     for (let i = 0; i < matchIds.length; i++) {
@@ -87,9 +91,11 @@ async function fetchPlayerForTab(player, tab, delay) {
     }
     const wins = matches.filter(m => m.win).length + countOnly.filter(w => w === true).length;
     const losses = matches.filter(m => !m.win).length + countOnly.filter(w => w === false).length;
+    console.log(`${player.name} (${tab}): ${wins}W ${losses}L`);
     const iconUrl = await getSummonerIcon(puuid);
     return { ok: true, player, wins, losses, iconUrl, matches };
   } catch(e) {
+    console.error(`Error fetching ${player.name} (${tab}):`, e.message);
     return { ok: false, player, error: e.message };
   }
 }
