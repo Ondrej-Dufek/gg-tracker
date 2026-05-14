@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
-const API_KEY = 'RGAPI-6624fc31-2e85-41cf-9cef-4f2e4776e862';
+const API_KEY = 'RGAPI-0ecc944e-362b-4488-aa40-c6a048b4d47b';
 
 app.get('/account/:name/:tag', async (req, res) => {
   try {
