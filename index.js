@@ -16,16 +16,22 @@ const PLAYERS = [
 let cache = { today: null, week: null, month: null };
 let lastUpdated = null;
 
+const TIMEZONE_OFFSET_HOURS = 2; // CET/CEST (UTC+2)
+
 function getStartTime(tab) {
   const now = new Date();
+  const localNow = new Date(now.getTime() + TIMEZONE_OFFSET_HOURS * 3600000);
   if (tab === 'today') {
-    const d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
+    const d = new Date(localNow); d.setUTCHours(0,0,0,0);
+    return Math.floor(d.getTime()/1000) - TIMEZONE_OFFSET_HOURS * 3600;
   } else if (tab === 'week') {
-    const d = new Date(); d.setHours(0,0,0,0);
-    const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff); return Math.floor(d.getTime()/1000);
+    const d = new Date(localNow); d.setUTCHours(0,0,0,0);
+    const day = d.getUTCDay(); const diff = day === 0 ? -6 : 1 - day;
+    d.setUTCDate(d.getUTCDate() + diff);
+    return Math.floor(d.getTime()/1000) - TIMEZONE_OFFSET_HOURS * 3600;
   } else {
-    return Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime()/1000);
+    const d = new Date(Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), 1));
+    return Math.floor(d.getTime()/1000) - TIMEZONE_OFFSET_HOURS * 3600;
   }
 }
 
