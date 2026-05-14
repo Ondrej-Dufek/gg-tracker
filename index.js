@@ -6,50 +6,153 @@ const app = express();
 app.use(cors());
 
 const API_KEY = process.env.RIOT_API_KEY;
+const PLAYERS = [
+  { name: 'OndyyS', tag: 'cream' },
+  { name: 'Moltiks', tag: 'cream' },
+  { name: 'Tobyy', tag: '1v9' },
+];
 
+// In-memory cache
+let cache = { today: null, week: null, month: null };
+let lastUpdated = null;
+
+function getStartTime(tab) {
+  const now = new Date();
+  if (tab === 'today') {
+    const d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
+  } else if (tab === 'week') {
+    const d = new Date(); d.setHours(0,0,0,0);
+    const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff); return Math.floor(d.getTime()/1000);
+  } else {
+    return Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime()/1000);
+  }
+}
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function getPUUID(name, tag) {
+  const res = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${API_KEY}`);
+  const data = await res.json();
+  if (!res.ok || data.status) throw new Error(`Account not found: ${name}#${tag}`);
+  return data.puuid;
+}
+
+async function getMatchIds(puuid, tab) {
+  const startTime = getStartTime(tab);
+  const res = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=200&startTime=${startTime}&api_key=${API_KEY}`);
+  return await res.json();
+}
+
+async function getMatchData(matchId, puuid, full) {
+  const res = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${API_KEY}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.info || !data.info.participants) return null;
+  const p = data.info.participants.find(p => p.puuid === puuid);
+  if (!p) return null;
+  if (!full) return { win: p.win };
+  return { win: p.win, champion: p.championName, kills: p.kills, deaths: p.deaths, assists: p.assists };
+}
+
+async function getSummonerIcon(puuid) {
+  try {
+    const res = await fetch(`https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}?api_key=${API_KEY}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${data.profileIconId}.png`;
+  } catch { return null; }
+}
+
+async function fetchPlayerForTab(player, tab, delay) {
+  await sleep(delay);
+  try {
+    const puuid = await getPUUID(player.name, player.tag);
+    await sleep(200);
+    const matchIds = await getMatchIds(puuid, tab);
+    const matches = [];
+    const countOnly = [];
+    for (let i = 0; i < matchIds.length; i++) {
+      await sleep(100);
+      const m = await getMatchData(matchIds[i], puuid, i < 10);
+      if (!m) continue;
+      if (i < 10) matches.push(m);
+      else countOnly.push(m.win);
+    }
+    const wins = matches.filter(m => m.win).length + countOnly.filter(w => w === true).length;
+    const losses = matches.filter(m => !m.win).length + countOnly.filter(w => w === false).length;
+    const iconUrl = await getSummonerIcon(puuid);
+    return { ok: true, player, wins, losses, iconUrl, matches };
+  } catch(e) {
+    return { ok: false, player, error: e.message };
+  }
+}
+
+async function refreshCache() {
+  console.log('Refreshing cache...', new Date().toISOString());
+  for (const tab of ['today', 'week', 'month']) {
+    const results = [];
+    for (let i = 0; i < PLAYERS.length; i++) {
+      const result = await fetchPlayerForTab(PLAYERS[i], tab, i * 800);
+      results.push(result);
+    }
+    cache[tab] = results;
+    await sleep(2000); // gap between tabs
+  }
+  lastUpdated = new Date().toISOString();
+  console.log('Cache refreshed at', lastUpdated);
+}
+
+// API endpoints
+app.get('/cache/:tab', (req, res) => {
+  const { tab } = req.params;
+  if (!['today', 'week', 'month'].includes(tab)) return res.status(400).json({ error: 'Invalid tab' });
+  if (!cache[tab]) return res.json({ loading: true });
+  res.json({ data: cache[tab], lastUpdated });
+});
+
+app.get('/refresh', async (req, res) => {
+  res.json({ message: 'Refresh started' });
+  await refreshCache();
+});
+
+// Keep old endpoints for compatibility
 app.get('/account/:name/:tag', async (req, res) => {
   try {
     const { name, tag } = req.params;
     const url = `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${API_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    res.json(data);
+    const r = await fetch(url); res.json(await r.json());
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/matches/:puuid', async (req, res) => {
   try {
     const { puuid } = req.params;
-    const startTime = req.query.startTime || (() => {
-      const d = new Date(); d.setHours(0,0,0,0);
-      return Math.floor(d.getTime() / 1000);
-    })();
-    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=100&startTime=${startTime}&api_key=${API_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    res.json(data);
+    const startTime = req.query.startTime || getStartTime('today');
+    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=200&startTime=${startTime}&api_key=${API_KEY}`;
+    const r = await fetch(url); res.json(await r.json());
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/match/:matchId', async (req, res) => {
   try {
-    const { matchId } = req.params;
-    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${API_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    res.json(data);
+    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/${req.params.matchId}?api_key=${API_KEY}`;
+    const r = await fetch(url); res.json(await r.json());
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/summoner/:puuid', async (req, res) => {
   try {
-    const { puuid } = req.params;
-    const url = `https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}?api_key=${API_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    res.json(data);
+    const url = `https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${req.params.puuid}?api_key=${API_KEY}`;
+    const r = await fetch(url); res.json(await r.json());
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Running on port ${PORT}`);
+  // Initial cache fill on startup
+  refreshCache();
+  // Refresh every 5 minutes
+  setInterval(refreshCache, 5 * 60 * 1000);
+});
