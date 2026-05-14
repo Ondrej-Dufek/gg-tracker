@@ -3,395 +3,170 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LoL Daily Tracker</title>
+<title>GG Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --gold: #C89B3C;
-    --gold-light: #F0E6D3;
-    --blue: #0BC4E3;
-    --dark: #0A0E1A;
-    --dark2: #0F1520;
-    --dark3: #161D2E;
-    --card: #111827;
-    --win: #27ae60;
-    --loss: #e74c3c;
-    --text: #B8C7D9;
+    --gold: #C89B3C; --gold-light: #F0E6D3; --blue: #0BC4E3;
+    --dark: #0A0E1A; --dark3: #161D2E; --card: #111827;
+    --win: #27ae60; --loss: #e74c3c; --text: #B8C7D9;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(12, 196, 227, 0.06) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 30% at 80% 80%, rgba(200, 155, 60, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 24px 16px 40px;
-    position: relative;
-    z-index: 1;
-  }
-
-  header {
-    text-align: center;
-    margin-bottom: 28px;
-  }
-
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 42px;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-    text-shadow: none;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin-top: 4px;
-    opacity: 0.8;
-  }
-
-  .refresh-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 10px 14px;
-    background: var(--dark3);
-    border: 1px solid rgba(200,155,60,0.2);
-    border-radius: 8px;
-  }
-
-  .refresh-info {
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: var(--text);
-    opacity: 0.6;
-  }
-
-  .refresh-info span {
-    color: var(--blue);
-    opacity: 1;
-  }
-
-  .btn-refresh {
-    background: linear-gradient(135deg, #1a2a40, #0d1a2e);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
+  body { background: var(--dark); color: var(--text); font-family: 'Rajdhani', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(12,196,227,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 30% at 80% 80%, rgba(200,155,60,0.05) 0%, transparent 50%); pointer-events: none; z-index: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 40px; position: relative; z-index: 1; }
+  header { text-align: center; margin-bottom: 24px; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 6px; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+  .subtitle { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--blue); margin-top: 4px; opacity: 0.8; }
+  .top-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 6px; background: var(--dark3); border: 1px solid rgba(200,155,60,0.15); border-radius: 8px; padding: 4px; }
+  .tab { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; color: var(--text); background: transparent; opacity: 0.5; transition: all 0.2s; }
+  .tab.active { background: linear-gradient(135deg, rgba(200,155,60,0.2), rgba(200,155,60,0.1)); border: 1px solid rgba(200,155,60,0.4); color: var(--gold); opacity: 1; }
+  .refresh-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--dark3); border: 1px solid rgba(200,155,60,0.2); border-radius: 8px; }
+  .refresh-info { font-size: 12px; letter-spacing: 1px; color: var(--text); opacity: 0.6; }
+  .refresh-info span { color: var(--blue); opacity: 1; }
+  .btn-refresh { background: linear-gradient(135deg, #1a2a40, #0d1a2e); border: 1px solid var(--gold); color: var(--gold); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .btn-refresh:hover { background: rgba(200,155,60,0.1); }
   .btn-refresh:active { transform: scale(0.97); }
   .btn-refresh:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .player-card {
-    background: var(--card);
-    border: 1px solid rgba(200,155,60,0.15);
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 14px;
-    position: relative;
-    overflow: hidden;
-    animation: slideIn 0.4s ease both;
-  }
-
-  .player-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0.5;
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .player-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid var(--gold);
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--dark3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    color: var(--gold);
-  }
-
+  .cards-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 768px) { .cards-grid { grid-template-columns: repeat(3, 1fr); } .logo { font-size: 60px; } .avatar { width: 56px !important; height: 56px !important; } .stat-value { font-size: 34px !important; } }
+  .player-card { background: var(--card); border: 1px solid rgba(200,155,60,0.15); border-radius: 12px; padding: 18px; position: relative; overflow: hidden; animation: slideIn 0.4s ease both; }
+  .player-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.5; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .player-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--gold); overflow: hidden; flex-shrink: 0; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--gold); }
   .avatar img { width: 100%; height: 100%; object-fit: cover; }
-
   .player-info { flex: 1; min-width: 0; }
-
-  .player-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    letter-spacing: 2px;
-    color: var(--gold-light);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .player-tag {
-    font-size: 12px;
-    color: var(--blue);
-    letter-spacing: 1px;
-    opacity: 0.7;
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-  }
-
-  .stat-box {
-    background: var(--dark3);
-    border-radius: 8px;
-    padding: 10px 8px;
-    text-align: center;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .stat-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 1px;
-    line-height: 1;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: 0.5;
-    margin-top: 3px;
-  }
-
+  .player-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--gold-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-tag { font-size: 12px; color: var(--blue); letter-spacing: 1px; opacity: 0.7; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat-box { background: var(--dark3); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; line-height: 1; }
+  .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; margin-top: 3px; }
   .stat-box.total .stat-value { color: var(--gold-light); }
   .stat-box.wins .stat-value { color: var(--win); }
   .stat-box.losses .stat-value { color: var(--loss); }
-
-  .winrate-bar {
-    margin-top: 12px;
-    height: 4px;
-    background: rgba(255,255,255,0.07);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .winrate-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--win), #2ecc71);
-    transition: width 0.8s ease;
-  }
-
-  .winrate-label {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-    font-size: 11px;
-    opacity: 0.5;
-    letter-spacing: 1px;
-  }
-
-  .loading-card {
-    background: var(--card);
-    border: 1px solid rgba(200,155,60,0.1);
-    border-radius: 12px;
-    padding: 28px;
-    text-align: center;
-    margin-bottom: 14px;
-  }
-
-  .spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid rgba(200,155,60,0.15);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 10px;
-  }
-
+  .winrate-bar { margin-top: 12px; height: 4px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+  .winrate-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--win), #2ecc71); transition: width 0.8s ease; }
+  .winrate-label { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; opacity: 0.5; letter-spacing: 1px; }
+  .match-history { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .match-icon-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .champ-icon { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; }
+  .match-icon-wrap.win .champ-icon { border-color: var(--win); }
+  .match-icon-wrap.loss .champ-icon { border-color: var(--loss); }
+  .wl-badge { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; font-family: 'Bebas Neue', sans-serif; font-size: 11px; display: flex; align-items: center; justify-content: center; z-index: 2; line-height: 1; }
+  .match-icon-wrap.win .wl-badge { background: var(--win); color: #fff; }
+  .match-icon-wrap.loss .wl-badge { background: var(--loss); color: #fff; }
+  .match-kda { font-size: 10px; letter-spacing: 0.5px; color: var(--text); opacity: 0.7; white-space: nowrap; }
+  .loading-card { background: var(--card); border: 1px solid rgba(200,155,60,0.1); border-radius: 12px; padding: 32px; text-align: center; }
+  .spinner { width: 32px; height: 32px; border: 3px solid rgba(200,155,60,0.15); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .loading-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--gold);
-    opacity: 0.7;
-  }
-
-  .error-card {
-    background: rgba(231,76,60,0.08);
-    border: 1px solid rgba(231,76,60,0.3);
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 14px;
-    font-size: 13px;
-    color: #e74c3c;
-    letter-spacing: 0.5px;
-  }
-
+  .loading-name { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--gold); opacity: 0.7; }
+  .error-card { background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 12px; padding: 16px 18px; font-size: 13px; color: #e74c3c; }
   .error-card strong { display: block; margin-bottom: 4px; font-size: 14px; }
-
-  .last-update {
-    text-align: center;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--text);
-    opacity: 0.35;
-    margin-top: 8px;
-  }
-
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(200,155,60,0.2), transparent);
-    margin: 20px 0;
-  }
+  .no-games { margin-top: 10px; text-align: center; font-size: 12px; opacity: 0.4; letter-spacing: 1px; }
+  .last-update { text-align: center; font-size: 11px; letter-spacing: 2px; color: var(--text); opacity: 0.35; margin-top: 16px; }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
     <div class="logo">GG Tracker</div>
-    <div class="subtitle">Daily Stats · EUNE</div>
+    <div class="subtitle">EUNE · Ranked Solo/Duo</div>
   </header>
-
-  <div class="refresh-row">
-    <div class="refresh-info">Auto-refresh in <span id="countdown">10:00</span></div>
-    <button class="btn-refresh" id="btnRefresh" onclick="fetchAll()">↻ Refresh</button>
+  <div class="top-bar">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today', this)">Today</button>
+      <button class="tab" onclick="switchTab('week', this)">This Week</button>
+      <button class="tab" onclick="switchTab('month', this)">This Month</button>
+    </div>
+    <div class="refresh-row">
+      <div class="refresh-info">Refresh in <span id="countdown">05:00</span></div>
+      <button class="btn-refresh" id="btnRefresh" onclick="fetchAll()">↻ Refresh</button>
+    </div>
   </div>
-
-  <div id="cards"></div>
+  <div class="cards-grid" id="cards"></div>
   <div class="last-update" id="lastUpdate"></div>
 </div>
-
 <script>
-const API_KEY = 'RGAPI-6624fc31-2e85-41cf-9cef-4f2e4776e862';
-const REGION_ACCOUNT = 'europe';
-const REGION_MATCH = 'eun1';
+const API_BASE = 'https://gg-tracker-production.up.railway.app';
 const PLAYERS = [
   { name: 'OndyyS', tag: 'cream' },
   { name: 'Moltiks', tag: 'cream' },
   { name: 'Tobyy', tag: '1v9' },
 ];
-
-let countdownSecs = 600;
+let currentTab = 'today';
+let countdownSecs = 300;
 let countdownInterval = null;
 
+function getStartTime(tab) {
+  if (tab === 'today') {
+    const d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
+  } else if (tab === 'week') {
+    const d = new Date(); d.setHours(0,0,0,0);
+    const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff); return Math.floor(d.getTime()/1000);
+  } else {
+    const d = new Date(); return Math.floor(new Date(d.getFullYear(), d.getMonth(), 1).getTime()/1000);
+  }
+}
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  fetchAll();
+}
+
 async function getPUUID(name, tag) {
-  const url = `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Account not found: ${name}#${tag} (${res.status})`);
+  const res = await fetch(`${API_BASE}/account/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`);
+  if (!res.ok) throw new Error(`Account not found: ${name}#${tag}`);
   const data = await res.json();
+  if (data.status) throw new Error(`Account not found: ${name}#${tag}`);
   return data.puuid;
 }
 
-async function getTodayMatches(puuid) {
-  const now = Math.floor(Date.now() / 1000);
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const startTs = Math.floor(startOfDay.getTime() / 1000);
-
-  const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=20&startTime=${startTs}&api_key=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to get matches (${res.status})`);
-  const matchIds = await res.json();
-  return matchIds;
+async function getMatches(puuid) {
+  const startTime = getStartTime(currentTab);
+  const res = await fetch(`${API_BASE}/matches/${puuid}?startTime=${startTime}`);
+  if (!res.ok) throw new Error('Failed to get matches');
+  return await res.json();
 }
 
-async function getMatchResult(matchId, puuid) {
-  const url = `https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${API_KEY}`;
-  const res = await fetch(url);
+async function getMatchData(matchId, puuid) {
+  const res = await fetch(`${API_BASE}/match/${matchId}`);
   if (!res.ok) return null;
   const data = await res.json();
-  const participant = data.info.participants.find(p => p.puuid === puuid);
-  if (!participant) return null;
-  return participant.win;
+  const p = data.info.participants.find(p => p.puuid === puuid);
+  if (!p) return null;
+  return { win: p.win, champion: p.championName, kills: p.kills, deaths: p.deaths, assists: p.assists };
 }
 
 async function getSummonerIcon(puuid) {
   try {
-    const url = `https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}?api_key=${API_KEY}`;
-    const res = await fetch(url);
+    const res = await fetch(`${API_BASE}/summoner/${puuid}`);
     if (!res.ok) return null;
     const data = await res.json();
-    return `https://ddragon.leagueoflegends.com/cdn/14.10.1/img/profileicon/${data.profileIconId}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${data.profileIconId}.png`;
   } catch { return null; }
 }
 
 function renderLoading(player) {
-  return `<div class="loading-card" id="card-${player.name}">
-    <div class="spinner"></div>
-    <div class="loading-name">${player.name}#${player.tag}</div>
-  </div>`;
+  return `<div class="loading-card" id="card-${player.name}"><div class="spinner"></div><div class="loading-name">${player.name}#${player.tag}</div></div>`;
 }
 
 function renderError(player, msg) {
-  return `<div class="error-card">
-    <strong>${player.name}#${player.tag}</strong>
-    ${msg}
-  </div>`;
+  return `<div class="error-card" id="card-${player.name}"><strong>${player.name}#${player.tag}</strong>${msg}</div>`;
 }
 
-function renderCard(player, wins, losses, iconUrl, delay) {
+function renderCard(player, wins, losses, iconUrl, matches, delay) {
   const total = wins + losses;
-  const wr = total > 0 ? Math.round((wins / total) * 100) : 0;
-  const initials = player.name.slice(0, 2).toUpperCase();
-  const avatarContent = iconUrl
-    ? `<img src="${iconUrl}" alt="" onerror="this.parentElement.textContent='${initials}'">`
-    : initials;
-
+  const wr = total > 0 ? Math.round((wins/total)*100) : 0;
+  const initials = player.name.slice(0,2).toUpperCase();
+  const avatarContent = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.parentElement.textContent='${initials}'">` : initials;
+  const historyMatches = matches.slice(0, 10);
+  const tabLabel = currentTab === 'today' ? 'today' : currentTab === 'week' ? 'this week' : 'this month';
   return `<div class="player-card" style="animation-delay:${delay}s">
     <div class="player-header">
       <div class="avatar">${avatarContent}</div>
@@ -401,89 +176,65 @@ function renderCard(player, wins, losses, iconUrl, delay) {
       </div>
     </div>
     <div class="stats-row">
-      <div class="stat-box total">
-        <div class="stat-value">${total}</div>
-        <div class="stat-label">Games</div>
-      </div>
-      <div class="stat-box wins">
-        <div class="stat-value">${wins}</div>
-        <div class="stat-label">Wins</div>
-      </div>
-      <div class="stat-box losses">
-        <div class="stat-value">${losses}</div>
-        <div class="stat-label">Losses</div>
-      </div>
+      <div class="stat-box total"><div class="stat-value">${total}</div><div class="stat-label">Games</div></div>
+      <div class="stat-box wins"><div class="stat-value">${wins}</div><div class="stat-label">Wins</div></div>
+      <div class="stat-box losses"><div class="stat-value">${losses}</div><div class="stat-label">Losses</div></div>
     </div>
     ${total > 0 ? `
-    <div class="winrate-bar">
-      <div class="winrate-fill" style="width:${wr}%"></div>
-    </div>
-    <div class="winrate-label">
-      <span>Winrate</span>
-      <span>${wr}%</span>
-    </div>` : `<div class="winrate-label" style="margin-top:10px;justify-content:center;opacity:0.4"><span>No ranked games today</span></div>`}
+      <div class="winrate-bar"><div class="winrate-fill" style="width:${wr}%"></div></div>
+      <div class="winrate-label"><span>Winrate</span><span>${wr}%</span></div>
+      <div class="match-history">${historyMatches.map(m => `
+        <div class="match-icon-wrap ${m.win ? 'win' : 'loss'}">
+          <div class="wl-badge">${m.win ? 'W' : 'L'}</div>
+          <img class="champ-icon" src="https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${m.champion}.png" alt="${m.champion}" onerror="this.src='https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/Aatrox.png'">
+          <div class="match-kda">${m.kills}/${m.deaths}/${m.assists}</div>
+        </div>`).join('')}
+      </div>` : `<div class="no-games">No ranked games ${tabLabel}</div>`}
   </div>`;
 }
 
 async function fetchPlayer(player, cardEl, delay) {
   try {
     const puuid = await getPUUID(player.name, player.tag);
-    const matchIds = await getTodayMatches(puuid);
-
-    let wins = 0, losses = 0;
-    // Fetch up to 10 matches (rate limit friendly)
-    const slice = matchIds.slice(0, 10);
-    for (const id of slice) {
-      const win = await getMatchResult(id, puuid);
-      if (win === true) wins++;
-      else if (win === false) losses++;
+    const matchIds = await getMatches(puuid);
+    const matches = [];
+    for (const id of matchIds.slice(0, 20)) {
+      const m = await getMatchData(id, puuid);
+      if (m) matches.push(m);
     }
-
+    const wins = matches.filter(m => m.win).length;
+    const losses = matches.filter(m => !m.win).length;
     const iconUrl = await getSummonerIcon(puuid);
-    cardEl.outerHTML = renderCard(player, wins, losses, iconUrl, delay);
-  } catch (e) {
-    cardEl.outerHTML = renderError(player, e.message);
-  }
+    cardEl.outerHTML = renderCard(player, wins, losses, iconUrl, matches, delay);
+  } catch(e) { cardEl.outerHTML = renderError(player, e.message); }
 }
 
 async function fetchAll() {
   const btn = document.getElementById('btnRefresh');
   btn.disabled = true;
-
-  // Show loading cards
   const cardsEl = document.getElementById('cards');
   cardsEl.innerHTML = PLAYERS.map(p => renderLoading(p)).join('');
-
-  // Fetch each player
   for (let i = 0; i < PLAYERS.length; i++) {
-    const p = PLAYERS[i];
-    const cardEl = document.getElementById(`card-${p.name}`);
-    await fetchPlayer(p, cardEl, i * 0.1);
+    const cardEl = document.getElementById(`card-${PLAYERS[i].name}`);
+    await fetchPlayer(PLAYERS[i], cardEl, i * 0.1);
   }
-
-  // Update last refresh time
-  const now = new Date();
-  document.getElementById('lastUpdate').textContent =
-    `Last updated ${now.toLocaleTimeString()}`;
-
-  // Reset countdown
+  document.getElementById('lastUpdate').textContent = `Last updated ${new Date().toLocaleTimeString()}`;
   resetCountdown();
   btn.disabled = false;
 }
 
 function resetCountdown() {
-  countdownSecs = 600;
+  countdownSecs = 300;
   if (countdownInterval) clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
     countdownSecs--;
-    const m = Math.floor(countdownSecs / 60).toString().padStart(2, '0');
-    const s = (countdownSecs % 60).toString().padStart(2, '0');
+    const m = Math.floor(countdownSecs/60).toString().padStart(2,'0');
+    const s = (countdownSecs%60).toString().padStart(2,'0');
     document.getElementById('countdown').textContent = `${m}:${s}`;
     if (countdownSecs <= 0) fetchAll();
   }, 1000);
 }
 
-// Initial load
 fetchAll();
 </script>
 </body>
