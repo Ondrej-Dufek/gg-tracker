@@ -198,9 +198,11 @@ async function fetchPlayer(player, cardEl, delay) {
     const puuid = await getPUUID(player.name, player.tag);
     const matchIds = await getMatches(puuid);
     const matches = [];
-    for (const id of matchIds.slice(0, 20)) {
+    const limit = currentTab === 'today' ? 10 : currentTab === 'week' ? 15 : 20;
+    for (const id of matchIds.slice(0, limit)) {
       const m = await getMatchData(id, puuid);
       if (m) matches.push(m);
+      await new Promise(r => setTimeout(r, 150)); // rate limit delay
     }
     const wins = matches.filter(m => m.win).length;
     const losses = matches.filter(m => !m.win).length;
