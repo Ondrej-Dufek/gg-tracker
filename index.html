@@ -83,7 +83,7 @@
     </div>
     <div class="refresh-row">
       <div class="refresh-info">Refresh in <span id="countdown">05:00</span></div>
-      <button class="btn-refresh" id="btnRefresh" onclick="fetchAll()">↻ Refresh</button>
+      <button class="btn-refresh" id="btnRefresh" onclick="loadTab()">↻ Refresh</button>
     </div>
   </div>
   <div class="cards-grid" id="cards"></div>
@@ -97,159 +97,52 @@ const PLAYERS = [
   { name: 'Tobyy', tag: '1v9' },
 ];
 let currentTab = 'today';
-let refreshInterval = null;
-
-// Cache: { today: [...], week: [...], month: [...] }
-// Each entry: { player, wins, losses, iconUrl, matches } or null if loading
-const cache = { today: null, week: null, month: null };
-const cacheTime = { today: 0, week: 0, month: 0 };
-
-function getStartTime(tab) {
-  if (tab === 'today') {
-    const d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
-  } else if (tab === 'week') {
-    const d = new Date(); d.setHours(0,0,0,0);
-    const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff); return Math.floor(d.getTime()/1000);
-  } else {
-    const d = new Date(); return Math.floor(new Date(d.getFullYear(), d.getMonth(), 1).getTime()/1000);
-  }
-}
+let countdownInterval = null;
 
 function switchTab(tab, btn) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  renderFromCache();
+  loadTab();
 }
 
-async function getPUUID(name, tag) {
-  const res = await fetch(`${API_BASE}/account/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`);
-  if (!res.ok) throw new Error(`Account not found: ${name}#${tag}`);
-  const data = await res.json();
-  if (data.status) throw new Error(`Account not found: ${name}#${tag}`);
-  return data.puuid;
-}
-
-async function getMatches(puuid, tab) {
-  const startTime = getStartTime(tab);
-  const res = await fetch(`${API_BASE}/matches/${puuid}?startTime=${startTime}`);
-  if (!res.ok) throw new Error('Failed to get matches');
-  return await res.json();
-}
-
-async function getMatchResult(matchId, puuid) {
+async function loadTab() {
+  const cardsEl = document.getElementById('cards');
+  cardsEl.innerHTML = PLAYERS.map(p => renderLoading(p)).join('');
   try {
-    const res = await fetch(`${API_BASE}/match/${matchId}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.info || !data.info.participants) return null;
-    const p = data.info.participants.find(p => p.puuid === puuid);
-    return p ? p.win : null;
-  } catch { return null; }
-}
-
-async function getMatchData(matchId, puuid) {
-  try {
-    const res = await fetch(`${API_BASE}/match/${matchId}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.info || !data.info.participants) return null;
-    const p = data.info.participants.find(p => p.puuid === puuid);
-    if (!p) return null;
-    return { win: p.win, champion: p.championName, kills: p.kills, deaths: p.deaths, assists: p.assists };
-  } catch { return null; }
-}
-
-async function getSummonerIcon(puuid) {
-  try {
-    const res = await fetch(`${API_BASE}/summoner/${puuid}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${data.profileIconId}.png`;
-  } catch { return null; }
-}
-
-async function fetchPlayerData(player, tab, delayMs) {
-  await new Promise(r => setTimeout(r, delayMs));
-  const puuid = await getPUUID(player.name, player.tag);
-  const matchIds = await getMatches(puuid, tab);
-  const matches = [];
-  const countOnly = [];
-  for (let i = 0; i < matchIds.length; i++) {
-    if (i < 10) {
-      const m = await getMatchData(matchIds[i], puuid);
-      if (m) matches.push(m);
-    } else {
-      const m = await getMatchResult(matchIds[i], puuid);
-      if (m !== null) countOnly.push(m);
+    const res = await fetch(`${API_BASE}/cache/${currentTab}`);
+    const json = await res.json();
+    if (json.loading) {
+      cardsEl.innerHTML = `<div class="loading-card" style="grid-column:1/-1"><div class="spinner"></div><div class="loading-name">Server is warming up...</div></div>`;
+      setTimeout(loadTab, 3000);
+      return;
     }
-    await new Promise(r => setTimeout(r, 100));
+    cardsEl.innerHTML = json.data.map((r, i) => {
+      if (!r.ok) return renderError(r.player, r.error);
+      return renderCard(r.player, r.wins, r.losses, r.iconUrl, r.matches, i * 0.1);
+    }).join('');
+    if (json.lastUpdated) {
+      document.getElementById('lastUpdate').textContent = `Last updated ${new Date(json.lastUpdated).toLocaleTimeString()}`;
+    }
+  } catch(e) {
+    cardsEl.innerHTML = `<div class="error-card" style="grid-column:1/-1"><strong>Failed to load</strong>${e.message}</div>`;
   }
-  const wins = matches.filter(m => m.win).length + countOnly.filter(w => w === true).length;
-  const losses = matches.filter(m => !m.win).length + countOnly.filter(w => w === false).length;
-  const iconUrl = await getSummonerIcon(puuid);
-  return { player, wins, losses, iconUrl, matches };
 }
 
-async function fetchTab(tab) {
-  const results = [];
-  const promises = PLAYERS.map((p, i) =>
-    fetchPlayerData(p, tab, i * 500)
-      .then(data => { results[i] = { ok: true, data }; })
-      .catch(e => { results[i] = { ok: false, player: p, error: e.message }; })
-  );
-  await Promise.all(promises);
-  cache[tab] = results;
-  cacheTime[tab] = Date.now();
-  // If this is the active tab, re-render
-  if (tab === currentTab) renderFromCache();
-}
-
-async function fetchAllTabs() {
-  document.getElementById('btnRefresh').disabled = true;
-  // Fetch all 3 tabs in sequence to avoid hammering rate limits
-  await fetchTab('today');
-  await fetchTab('week');
-  await fetchTab('month');
-  document.getElementById('lastUpdate').textContent = `Last updated ${new Date().toLocaleTimeString()}`;
-  document.getElementById('btnRefresh').disabled = false;
-  // Schedule next refresh in 5 mins
-  if (refreshInterval) clearInterval(refreshInterval);
-  refreshInterval = setInterval(() => fetchAllTabs(), 5 * 60 * 1000);
-  updateCountdown();
-}
-
-let nextRefreshAt = 0;
-let countdownInterval = null;
-
-function updateCountdown() {
-  nextRefreshAt = Date.now() + 5 * 60 * 1000;
+function startCountdown() {
+  let secs = 300;
   if (countdownInterval) clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
-    const remaining = Math.max(0, nextRefreshAt - Date.now());
-    const m = Math.floor(remaining / 60000).toString().padStart(2,'0');
-    const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2,'0');
+    secs--;
+    const m = Math.floor(secs/60).toString().padStart(2,'0');
+    const s = (secs%60).toString().padStart(2,'0');
     document.getElementById('countdown').textContent = `${m}:${s}`;
+    if (secs <= 0) { secs = 300; loadTab(); }
   }, 1000);
 }
 
-function renderFromCache() {
-  const cardsEl = document.getElementById('cards');
-  const data = cache[currentTab];
-  if (!data) {
-    cardsEl.innerHTML = PLAYERS.map(p => renderLoading(p)).join('');
-    return;
-  }
-  cardsEl.innerHTML = data.map((r, i) => {
-    if (!r) return renderLoading(PLAYERS[i]);
-    if (!r.ok) return renderError(r.player, r.error);
-    return renderCard(r.data.player, r.data.wins, r.data.losses, r.data.iconUrl, r.data.matches, i * 0.1);
-  }).join('');
-}
-
 function renderLoading(player) {
-  return `<div class="loading-card" id="card-${player.name}"><div class="spinner"></div><div class="loading-name">${player.name}#${player.tag}</div></div>`;
+  return `<div class="loading-card"><div class="spinner"></div><div class="loading-name">${player.name}#${player.tag}</div></div>`;
 }
 
 function renderError(player, msg) {
@@ -261,7 +154,7 @@ function renderCard(player, wins, losses, iconUrl, matches, delay) {
   const wr = total > 0 ? Math.round((wins/total)*100) : 0;
   const initials = player.name.slice(0,2).toUpperCase();
   const avatarContent = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.parentElement.textContent='${initials}'">` : initials;
-  const historyMatches = matches.slice(0, 10);
+  const historyMatches = (matches || []).slice(0, 10);
   const tabLabel = currentTab === 'today' ? 'today' : currentTab === 'week' ? 'this week' : 'this month';
   return `<div class="player-card" style="animation-delay:${delay}s">
     <div class="player-header">
@@ -289,8 +182,8 @@ function renderCard(player, wins, losses, iconUrl, matches, delay) {
   </div>`;
 }
 
-// Initial load
-fetchAllTabs();
+loadTab();
+startCountdown();
 </script>
 </body>
 </html>
