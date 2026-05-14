@@ -46,7 +46,7 @@ async function getPUUID(name, tag) {
 
 async function getMatchIds(puuid, tab) {
   const startTime = getStartTime(tab);
-  const res = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=200&startTime=${startTime}&api_key=${API_KEY}`);
+  const res = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=100&startTime=${startTime}&api_key=${API_KEY}`);
   return await res.json();
 }
 
@@ -141,7 +141,7 @@ app.get('/matches/:puuid', async (req, res) => {
   try {
     const { puuid } = req.params;
     const startTime = req.query.startTime || getStartTime('today');
-    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=200&startTime=${startTime}&api_key=${API_KEY}`;
+    const url = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=100&startTime=${startTime}&api_key=${API_KEY}`;
     const r = await fetch(url); res.json(await r.json());
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
